@@ -1,0 +1,58 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Dashboard DJ Tshake</title><link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080a;--p:#101216;--l:#2a2d33;--i:#f3f4f6;--m:#9aa0aa;--a:#c6ff3d}
+*{box-sizing:border-box;margin:0}body{background:var(--bg);color:var(--i);font:400 .95rem/1.6 system-ui,sans-serif;padding:1rem;max-width:1000px;margin:auto}
+h1{font:400 1.8rem Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.04em}body{font-family:Poppins,system-ui,sans-serif}h3{margin:1.2rem 0 .6rem}
+button,.b{font:inherit;cursor:pointer;background:transparent;color:var(--i);border:1px solid var(--l);border-radius:99px;padding:.3rem .9rem;text-decoration:none;display:inline-block}
+.pr{background:var(--a);color:#111;border-color:var(--a)}.on{border-color:var(--a);color:var(--a)}
+nav{display:flex;gap:.4rem;flex-wrap:wrap;margin:1rem 0;position:sticky;top:0;background:var(--bg);padding:.5rem 0;z-index:5}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem}
+.c{background:var(--p);border:1px solid var(--l);border-radius:14px;padding:1rem}.c small{color:var(--m);display:block}.c b{font-size:1.5rem}
+input,textarea{background:#0f1113;border:1px solid var(--l);color:var(--i);border-radius:10px;padding:.5rem .7rem;font:inherit;width:100%}
+label{display:grid;gap:.2rem;color:var(--m);font-size:.82rem;margin-bottom:.6rem}
+table{width:100%;border-collapse:collapse}td,th{padding:.5rem;border-bottom:1px solid var(--l);text-align:left;vertical-align:top;font-size:.85rem}
+.th{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}.th div{position:relative}.th img{width:84px;height:84px;object-fit:cover;border-radius:8px}.th button{position:absolute;top:2px;right:2px;padding:0 .4rem;background:#000b}
+.s{border-radius:99px;padding:.1rem .6rem;font-size:.75rem;border:1px solid var(--l)}.s.lunas{color:var(--a);border-color:var(--a)}.s.batal,.s.kedaluwarsa{color:#ff6b6b}
+[hidden]{display:none!important}#t{position:fixed;top:14px;right:14px;background:var(--a);color:#111;padding:.4rem 1rem;border-radius:99px;display:none;z-index:9}
+</style></head><body>
+<div id="lg"><h1>Dashboard DJ Tshake</h1><p id="lm" style="color:#ff6b6b"></p><label>PIN admin<input id="pin" type="password"></label><button class="pr" id="go">Masuk</button></div>
+<div id="ap" hidden><div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap"><h1>Dashboard DJ Tshake</h1><span><a class="b" href="/" target="_blank">Web penyewa</a> <button id="sw" data-site></button> <button class="pr" data-save>Simpan perubahan</button> <button data-out>Keluar</button></span></div><nav id="nv"></nav><div id="bd"></div></div><div id="t"></div>
+<script src="defaults.js"></script>
+<script>
+const $=s=>document.querySelector(s),e=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),rp=n=>"Rp"+(+n||0).toLocaleString("id-ID");
+let PIN=sessionStorage.pin||"",D,BK=[],T="dash";
+const toast=m=>{const t=$("#t");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",2800)};
+const api=(u,m="GET",b)=>fetch(u,{method:m,headers:{"x-pin":PIN,...(b&&{"content-type":"application/json"})},body:b&&JSON.stringify(b)}).then(r=>r.ok?r.json():Promise.reject(r.status));
+const shrink=(f,m,t)=>new Promise(ok=>{const i=new Image();i.onload=()=>{const s=Math.min(1,m/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=i.width*s;c.height=i.height*s;c.getContext("2d").drawImage(i,0,0,c.width,c.height);c.toBlob(ok,t,.82)};i.src=URL.createObjectURL(f)});
+const up=async(f,t)=>(await fetch("/api/upload",{method:"POST",headers:{"x-pin":PIN,"content-type":t},body:await shrink(f,1400,t)}).then(r=>r.json())).url;
+const TABS={dash:"Ringkasan",ord:"Pesanan",ev:"Event & Foto",rt:"Paket",set:"Pengaturan"};
+const S=s=>BK.filter(b=>b.status===s),today=new Date(Date.now()+7*36e5).toISOString().slice(0,10);
+const F=(p,l,v,t="text")=>`<label>${l}<input type="${t}" data-k="${p}" value="${e(v)}"></label>`;
+function draw(){
+ $("#nv").innerHTML=Object.entries(TABS).map(([k,v])=>`<button class="${k==T?"on":""}" data-t="${k}">${v}</button>`).join("");
+ const P=D.profile,Y=D.pay;let h="";
+ if(T=="dash"){const nx=BK.filter(b=>["lunas","menunggu"].includes(b.status)&&b.date>=today).sort((a,b)=>a.date<b.date?-1:1);
+  h=`<div class="g">${[["Menunggu bayar",S("menunggu").length],["Lunas",S("lunas").length],["Pendapatan (lunas)",rp(S("lunas").reduce((a,b)=>a+b.amt,0))],["Total pesanan",BK.length]].map(([l,n])=>`<div class="c"><small>${l}</small><b>${n}</b></div>`).join("")}</div><h3>Jadwal mendatang</h3>${nx.length?`<table>${nx.map(b=>`<tr><td>${b.date}</td><td>${e(b.pkg)}</td><td>${e(b.name)}</td><td>${e(b.place)}</td><td><span class="s ${b.status}">${b.status}</span></td></tr>`).join("")}</table>`:"<p>Belum ada.</p>"}`}
+ if(T=="ord")h=BK.length?`<table><tr><th>Kode</th><th>Tanggal</th><th>Pemesan</th><th>Total</th><th>Status</th><th></th></tr>${BK.map(b=>`<tr><td>${b.id}</td><td>${b.date}<br><small>${e(b.place)}</small></td><td>${e(b.name)}<br><small>${e(b.pkg)}</small></td><td>${b.amt?rp(b.amt):"Custom"}</td><td><span class="s ${b.status}">${b.status}</span><br><small>maks. ${b.date} 23.49</small></td><td><button data-st="${b.id}:lunas">Lunas</button> <button data-st="${b.id}:batal">Batal</button> <a class="b" target="_blank" href="https://wa.me/${b.wa}?text=${encodeURIComponent("Halo "+b.name+", soal pesanan DJ Tshake "+b.id)}">WA</a></td></tr>`).join("")}</table>`:"<p>Belum ada pesanan.</p>";
+ if(T=="ev")h=`<button class="pr" data-add>+ Event</button>`+D.events.map((v,i)=>`<div class="c" style="margin-top:1rem">${F(`events.${i}.name`,"Nama event",v.name)}<div class="g">${F(`events.${i}.date`,"Tanggal event",v.date,"date")}${F(`events.${i}.venue`,"Lokasi / kota",v.venue)}${F(`events.${i}.audience`,"Audiens",v.audience)}</div><label>Highlight<textarea rows="3" data-k="events.${i}.highlight">${e(v.highlight)}</textarea></label><div class="th">${v.photos.map((p,k)=>`<div><img src="${e(p)}" alt=""><button data-rm="${i}:${k}">×</button></div>`).join("")}</div><label class="b">+ Foto (boleh banyak)<input type="file" accept="image/*" multiple hidden data-up="ev:${i}"></label> <button data-del="${i}" style="color:#ff6b6b">Hapus event</button></div>`).join("");
+ if(T=="rt")h=`<p>Edit JSON paket: name, who, dur, price, amt (harga angka, 0 = custom), tag, best, items.</p><textarea id="rj" rows="22" style="font-family:monospace">${e(JSON.stringify(D.rates,null,1))}</textarea>`;
+ if(T=="set")h=`<h3>Profil</h3>${P.photo?`<img src="${e(P.photo)}" alt="" style="max-height:140px;background:#1b1e23;border-radius:10px;display:block">`:""}<label class="b">Upload foto hero (PNG transparan paling bagus)<input type="file" accept="image/*" hidden data-up="profile.photo"></label>${F("profile.waShow","WhatsApp",P.waShow)}${F("profile.ig","Instagram",P.ig)}${F("profile.email","Email",P.email)}<h3>Angka di beranda</h3>${P.stats.map((x,i)=>F(`profile.stats.${i}.n`,"Angka "+(i+1),x.n)+F(`profile.stats.${i}.l`,"Label "+(i+1),x.l)).join("")}<h3>Pembayaran</h3>${F("pay.bank","Bank",Y.bank)}${F("pay.no","No. rekening",Y.no)}${F("pay.name","Atas nama",Y.name)}${F("pay.note","Catatan",Y.note)}${Y.qris?`<img src="${e(Y.qris)}" alt="" style="width:160px;background:#fff;padding:6px;border-radius:10px;display:block">`:""}<label class="b">Upload QRIS<input type="file" accept="image/*" hidden data-up="pay.qris"></label>`;
+ $("#bd").innerHTML=h}
+const setSw=()=>{const b=$("#sw");b.textContent=D.off?"Web: NONAKTIF":"Web: AKTIF";b.style.cssText=D.off?"border-color:#ff6b6b;color:#ff6b6b":"border-color:var(--a);color:var(--a)"};
+async function boot(){try{BK=await api("/api/booking");const r=await fetch("/api/data",{headers:{"x-pin":PIN}}).then(r=>r.json());D={...DEF,...(r.data||{})};setSw();sessionStorage.pin=PIN;$("#lg").hidden=true;$("#ap").hidden=false;draw()}catch{sessionStorage.clear();$("#lm").textContent="PIN salah atau server belum siap (cek Redis & ADMIN_PIN)"}}
+$("#go").onclick=()=>{PIN=$("#pin").value;boot()};if(PIN)boot();
+document.addEventListener("input",x=>{const k=x.target.dataset.k;if(!k)return;const a=k.split(".");let o=D;a.slice(0,-1).forEach(z=>o=o[z]);o[a.at(-1)]=x.target.value;if(k=="profile.waShow")D.profile.wa=x.target.value.replace(/\D/g,"").replace(/^0/,"62")});
+document.addEventListener("change",async x=>{const t=x.target;
+ if(t.id=="rj"){try{D.rates=JSON.parse(t.value)}catch{toast("Format JSON salah")}}
+ if(t.dataset.up){const[w,i]=t.dataset.up.split(":");toast("Mengunggah...");
+  try{if(w=="ev"){for(const f of t.files)D.events[i].photos.push(await up(f,"image/jpeg"))}else{const[a,b]=w.split(".");D[a][b]=await up(t.files[0],"image/png")}draw();toast("Foto terunggah. Klik Simpan perubahan.")}catch{toast("Upload gagal. Cek Blob & PIN")}}});
+document.addEventListener("click",async x=>{const t=x.target.closest("button");if(!t)return;const d=t.dataset;
+ if(d.t){T=d.t;draw()}
+ else if("add" in d){D.events.unshift({name:"Event baru",date:"",venue:"",audience:"",highlight:"",photos:[]});draw()}
+ else if(d.del!==undefined){if(confirm("Hapus event ini?")){D.events.splice(+d.del,1);draw()}}
+ else if(d.rm){const[i,k]=d.rm.split(":");D.events[i].photos.splice(+k,1);draw()}
+ else if(d.st){const[id,s]=d.st.split(":");try{const b=await api("/api/booking","PATCH",{id,status:s});BK=BK.map(o=>o.id==id?b:o);draw();toast("Status diubah")}catch{toast("Gagal mengubah status")}}
+ else if("site" in d){const w=!D.off;if(w&&!confirm("Nonaktifkan web? Pengunjung akan melihat halaman ditutup sementara."))return;D.off=w;try{await api("/api/data","POST",D);setSw();toast(w?"Web dinonaktifkan":"Web aktif kembali")}catch{D.off=!w;toast("Gagal mengubah status web")}}
+ else if("save" in d){try{await api("/api/data","POST",D);toast("Tersimpan, web penyewa sudah terbarui")}catch{toast("Gagal menyimpan")}}
+ else if("out" in d){sessionStorage.clear();location.reload()}});
+</script></body></html>
